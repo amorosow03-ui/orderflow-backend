@@ -1,0 +1,16 @@
+﻿services:
+  postgres:
+    image: postgres:16
+    container_name: orderflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orderflow_db
+      POSTGRES_USER: orderflow_user
+      POSTGRES_PASSWORD: orderflow_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - orderflow_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  orderflow_postgres_data:
