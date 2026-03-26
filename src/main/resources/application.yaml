@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: orderflow
+
+server:
+  port: 8080
