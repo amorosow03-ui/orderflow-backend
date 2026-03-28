@@ -5,6 +5,7 @@ import com.alexander.orderflow.product.dto.ProductResponse;
 import com.alexander.orderflow.product.entity.Product;
 import com.alexander.orderflow.product.mapper.ProductMapper;
 import com.alexander.orderflow.product.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class ProductController{
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponse createProduct(@RequestBody CreateProductRequest request){
+    public ProductResponse createProduct(@Valid @RequestBody CreateProductRequest request){
         Product product = productMapper.toEntity(request);
         Product savedProduct = productService.createProduct(product);
         return productMapper.toResponse(savedProduct);
