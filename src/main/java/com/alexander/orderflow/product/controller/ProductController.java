@@ -1,0 +1,30 @@
+package com.alexander.orderflow.product.controller;
+
+import com.alexander.orderflow.product.dto.CreateProductRequest;
+import com.alexander.orderflow.product.dto.ProductResponse;
+import com.alexander.orderflow.product.entity.Product;
+import com.alexander.orderflow.product.mapper.ProductMapper;
+import com.alexander.orderflow.product.service.ProductService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController{
+    private final ProductService productService;
+    private final ProductMapper productMapper;
+
+    public ProductController(ProductService productService, ProductMapper productMapper) {
+        this.productService = productService;
+        this.productMapper = productMapper;
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(@RequestBody CreateProductRequest request){
+        Product product = productMapper.toEntity(request);
+        Product savedProduct = productService.createProduct(product);
+        return productMapper.toResponse(savedProduct);
+    }
+}
+
