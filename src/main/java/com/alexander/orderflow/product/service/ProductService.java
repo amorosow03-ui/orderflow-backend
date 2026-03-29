@@ -4,6 +4,7 @@ import com.alexander.orderflow.product.entity.Product;
 import com.alexander.orderflow.product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import com.alexander.orderflow.exception.DuplicateSkuException;
+import com.alexander.orderflow.exception.ProductNotFoundException;
 
 @Service
 public class ProductService{
@@ -18,5 +19,10 @@ public class ProductService{
             throw new DuplicateSkuException("Product with SKU " + product.getSku() + " already exists.");
         }
         return productRepository.save(product);
+    }
+
+    public Product getProductById(Long id){
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
     }
 }
