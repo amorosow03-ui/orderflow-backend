@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/products")
@@ -34,6 +36,13 @@ public class ProductController{
     public ProductResponse getProductById(@PathVariable Long id){
         Product product = productService.getProductById(id);
         return productMapper.toResponse(product);
+    }
+
+    @GetMapping
+    public List<ProductResponse> getAllProducts(){
+        return productService.getAllProducts().stream()
+                .map(productMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }
 

@@ -5,6 +5,7 @@ import com.alexander.orderflow.product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import com.alexander.orderflow.exception.DuplicateSkuException;
 import com.alexander.orderflow.exception.ProductNotFoundException;
+import java.util.List;
 
 @Service
 public class ProductService{
@@ -24,5 +25,9 @@ public class ProductService{
     public Product getProductById(Long id){
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+    }
+
+    public List<Product> getAllProducts(){
+        return productRepository.findAll();
     }
 }
