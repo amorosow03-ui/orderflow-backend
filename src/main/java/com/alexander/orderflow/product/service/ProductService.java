@@ -7,6 +7,8 @@ import com.alexander.orderflow.exception.DuplicateSkuException;
 import com.alexander.orderflow.exception.ProductNotFoundException;
 import java.util.List;
 import com.alexander.orderflow.product.dto.UpdateProductRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class ProductService{
@@ -28,8 +30,8 @@ public class ProductService{
                 .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
     }
 
-    public List<Product> getAllProducts(){
-        return productRepository.findAll();
+    public Page<Product> getAllProducts(Pageable pageable){
+        return productRepository.findAll(pageable);
     }
 
     public void deleteProductById(Long id){

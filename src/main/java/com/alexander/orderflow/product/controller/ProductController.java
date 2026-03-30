@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.alexander.orderflow.product.dto.UpdateProductRequest;
+import com.alexander.orderflow.product.dto.PagedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
 @RestController
 @RequestMapping("/api/products")
@@ -42,10 +46,23 @@ public class ProductController{
     }
 
     @GetMapping
-    public List<ProductResponse> getAllProducts(){
-        return productService.getAllProducts().stream()
+    public PagedResponse<ProductResponse> getAllProducts(
+            @PageableDefault(page = 0, size = 10, sort = "name") Pageable pageable
+    ) {
+        Page<Product> productPage = productService.getAllProducts(pageable);
+
+        List<ProductResponse> content = productPage.getContent().stream()
                 .map(productMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages(),
+                productPage.isLast()
+        );
     }
 
     @DeleteMapping("/{id}")
