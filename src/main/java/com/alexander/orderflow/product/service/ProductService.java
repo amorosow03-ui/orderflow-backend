@@ -2,9 +2,13 @@ package com.alexander.orderflow.product.service;
 
 import com.alexander.orderflow.product.entity.Product;
 import com.alexander.orderflow.product.repository.ProductRepository;
+import com.alexander.orderflow.product.specification.ProductSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.alexander.orderflow.exception.DuplicateSkuException;
 import com.alexander.orderflow.exception.ProductNotFoundException;
+
+import java.math.BigDecimal;
 import java.util.List;
 import com.alexander.orderflow.product.dto.UpdateProductRequest;
 import org.springframework.data.domain.Page;
@@ -55,5 +59,21 @@ public class ProductService{
         product.setStockQuantity(request.getStockQuantity());
 
         return productRepository.save(product);
+    }
+
+    public Page<Product> searchProducts(
+            String name,
+            String sku,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Pageable pageable
+    ) {
+        Specification<Product> spec = Specification
+                .where(ProductSpecification.hasName(name))
+                .and(ProductSpecification.hasSku(sku))
+                .and(ProductSpecification.priceGreaterThanOrEqualTo(minPrice))
+                .and(ProductSpecification.priceLessThanOrEqualTo(maxPrice));
+
+        return productRepository.findAll(spec, pageable);
     }
 }
