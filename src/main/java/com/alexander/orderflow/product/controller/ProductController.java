@@ -5,12 +5,14 @@ import com.alexander.orderflow.product.dto.ProductResponse;
 import com.alexander.orderflow.product.entity.Product;
 import com.alexander.orderflow.product.mapper.ProductMapper;
 import com.alexander.orderflow.product.service.ProductService;
+import com. alexander.orderflow.product.dto.ProductPatchRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
@@ -110,6 +112,16 @@ public class ProductController{
                 productPage.getTotalPages(),
                 productPage.isLast()
         );
+    }
+
+    @Operation(summary = "Partially update an existing product")
+    @PatchMapping("/{id}")
+    public ProductResponse patchProduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductPatchRequest request
+    ){
+        Product updatedProduct = productService.patchProduct(id, request);
+        return productMapper.toResponse(updatedProduct);
     }
 }
 

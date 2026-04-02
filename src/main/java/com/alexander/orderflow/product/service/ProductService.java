@@ -13,6 +13,7 @@ import java.util.List;
 import com.alexander.orderflow.product.dto.UpdateProductRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.alexander.orderflow.product.dto.ProductPatchRequest;
 
 @Service
 public class ProductService{
@@ -75,5 +76,27 @@ public class ProductService{
                 .and(ProductSpecification.priceLessThanOrEqualTo(maxPrice));
 
         return productRepository.findAll(spec, pageable);
+    }
+
+    public Product patchProduct(Long id, ProductPatchRequest request) {
+        Product product = getProductById(id);
+
+        if (request.getSku() != null) {
+            product.setSku(request.getSku());
+        }
+
+        if (request.getName() != null) {
+            product.setName(request.getName());
+        }
+
+        if (request.getPrice() != null) {
+            product.setPrice(request.getPrice());
+        }
+
+        if (request.getStockQuantity() != null) {
+            product.setStockQuantity(request.getStockQuantity());
+        }
+
+        return productRepository.save(product);
     }
 }
