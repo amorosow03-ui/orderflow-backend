@@ -5,11 +5,11 @@ import com.alexander.orderflow.product.repository.ProductRepository;
 import com.alexander.orderflow.product.specification.ProductSpecification;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import com.alexander.orderflow.exception.DuplicateSkuException;
-import com.alexander.orderflow.exception.ProductNotFoundException;
+import com.alexander.orderflow.exception.DuplicateResourceException;
+import com.alexander.orderflow.exception.ResourceNotFoundException;
 
 import java.math.BigDecimal;
-import java.util.List;
+
 import com.alexander.orderflow.product.dto.UpdateProductRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,14 +25,14 @@ public class ProductService{
 
     public Product createProduct(Product product){
         if(productRepository.existsBySku(product.getSku())) {
-            throw new DuplicateSkuException("Product with SKU " + product.getSku() + " already exists");
+            throw new DuplicateResourceException("Product with SKU " + product.getSku() + " already exists");
         }
         return productRepository.save(product);
     }
 
     public Product getProductById(Long id){
         return productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product with id " + id + " not found"));
     }
 
     public Page<Product> getAllProducts(Pageable pageable){
@@ -41,17 +41,17 @@ public class ProductService{
 
     public void deleteProductById(Long id){
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product with id " + id + " not found"));
 
         productRepository.delete(product);
     }
 
     public Product updateProduct(Long id, UpdateProductRequest request){
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product with id " + id + " not found"));
 
         if(productRepository.existsBySkuAndIdNot(request.getSku(), id)){
-            throw new DuplicateSkuException("Product with SKU " + product.getSku() + " already exists");
+            throw new DuplicateResourceException("Product with SKU " + product.getSku() + " already exists");
         }
 
         product.setSku(request.getSku());
