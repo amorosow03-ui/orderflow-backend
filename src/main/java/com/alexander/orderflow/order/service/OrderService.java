@@ -10,6 +10,11 @@ import com.alexander.orderflow.order.mapper.OrderMapper;
 import com.alexander.orderflow.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.alexander.orderflow.exception.InvalidOrderStateException;
+import com.alexander.orderflow.orderitem.entity.OrderItem;
+import com.alexander.orderflow.orderitem.repository.OrderItemRepository;
+import com.alexander.orderflow.product.entity.Product;
+import com.alexander.orderflow.product.repository.ProductRepository;
 
 import java.util.List;
 
@@ -19,13 +24,19 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final OrderMapper orderMapper;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductRepository productRepository;
 
     public OrderService(OrderRepository orderRepository,
                         CustomerRepository customerRepository,
-                        OrderMapper orderMapper) {
+                        OrderMapper orderMapper,
+                        OrderItemRepository orderItemRepository,
+                        ProductRepository productRepository) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.orderMapper = orderMapper;
+        this.orderItemRepository = orderItemRepository;
+        this.productRepository = productRepository;
     }
 
     @Transactional
@@ -65,9 +76,7 @@ public class OrderService {
 
         existing.setCustomer(customer);
 
-        if (request.getStatus() != null) {
-            existing.setStatus(request.getStatus());
-        }
+        applyStatusChange(existing, request.getStatus());
 
         return orderRepository.save(existing);
     }
@@ -83,9 +92,7 @@ public class OrderService {
             existing.setCustomer(customer);
         }
 
-        if (patchRequest.getStatus() != null) {
-            existing.setStatus(patchRequest.getStatus());
-        }
+        applyStatusChange(existing, patchRequest.getStatus());
 
         return orderRepository.save(existing);
     }
@@ -95,4 +102,57 @@ public class OrderService {
         Order existing = getOrderById(id);
         orderRepository.delete(existing);
     }
+
+    private void validateStatusTransition(Order.OrderStatus currentStatus, Order.OrderStatus newStatus) {
+        if (newStatus == null || currentStatus == newStatus) {
+            return;
+        }
+
+        boolean validTransition = false;
+
+        switch (currentStatus) {
+            case CREATED:
+                validTransition = (newStatus == Order.OrderStatus.PAID || newStatus == Order.OrderStatus.CANCELLED);
+                break;
+
+            case PAID:
+                validTransition = (newStatus == Order.OrderStatus.SHIPPED || newStatus == Order.OrderStatus.CANCELLED);
+                break;
+
+            case SHIPPED:
+            case CANCELLED:
+                validTransition = false;
+                break;
+        }
+        if (!validTransition) {
+            throw new InvalidOrderStateException(
+                    "Invalid order status transition from " + currentStatus + " to " + newStatus
+            );
+        }
+    }
+
+        private void restoreStockForCancelledOrder(Order order) {
+            List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+
+            for (OrderItem orderItem : orderItems) {
+                Product product = orderItem.getProduct();
+                product.setStockQuantity(product.getStockQuantity() + orderItem.getQuantity());
+                productRepository.save(product);
+            }
+        }
+
+        private void applyStatusChange(Order order, Order.OrderStatus newStatus) {
+            if (newStatus == null || order.getStatus() == newStatus) {
+                return;
+            }
+
+            validateStatusTransition(order.getStatus(), newStatus);
+
+            // Wenn auf CANCELLED gewechselt wird, Bestand zurückgeben
+            if (newStatus == Order.OrderStatus.CANCELLED) {
+                restoreStockForCancelledOrder(order);
+            }
+
+            order.setStatus(newStatus);
+        }
 }

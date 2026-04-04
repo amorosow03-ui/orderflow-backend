@@ -78,6 +78,34 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiErrorResponse> handleInsufficientStockException(
+            InsufficientStockException ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse errorResponse = buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidOrderStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidOrderStateException(
+            InvalidOrderStateException ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse errorResponse = buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     private ApiErrorResponse buildErrorResponse(
             HttpStatus status,
             String message,
