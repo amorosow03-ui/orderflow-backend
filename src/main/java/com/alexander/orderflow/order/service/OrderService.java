@@ -103,6 +103,13 @@ public class OrderService {
         orderRepository.delete(existing);
     }
 
+    @Transactional(readOnly = true)
+    public List<OrderItem> getOrderItemsForOrder(Long orderId) {
+        getOrderById(orderId);
+
+        return orderItemRepository.findByOrderId(orderId);
+    }
+
     private void validateStatusTransition(Order.OrderStatus currentStatus, Order.OrderStatus newStatus) {
         if (newStatus == null || currentStatus == newStatus) {
             return;

@@ -1,11 +1,13 @@
 package com.alexander.orderflow.order.controller;
 
+import com.alexander.orderflow.order.dto.OrderDetailResponse;
 import com.alexander.orderflow.order.dto.OrderRequest;
 import com.alexander.orderflow.order.dto.OrderPatchRequest;
 import com.alexander.orderflow.order.dto.OrderResponse;
 import com.alexander.orderflow.order.entity.Order;
 import com.alexander.orderflow.order.mapper.OrderMapper;
 import com.alexander.orderflow.order.service.OrderService;
+import com.alexander.orderflow.orderitem.entity.OrderItem;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -38,10 +40,13 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get an Order by ID")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
+    @Operation(summary = "Get an Order by ID with items and total amount")
+    public ResponseEntity<OrderDetailResponse> getOrderById(@PathVariable Long id) {
         Order order = service.getOrderById(id);
-        return ResponseEntity.ok(mapper.toResponse(order));
+        List<OrderItem> orderItems = service.getOrderItemsForOrder(id);
+
+        OrderDetailResponse response = mapper.toDetailResponse(order, orderItems);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
