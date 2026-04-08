@@ -91,6 +91,18 @@ public class OrderItemService {
     @Transactional
     public void deleteOrderItem(Long id) {
         OrderItem existing = getOrderItemById(id);
+
+        Order order = existing.getOrder();
+        if (order.getStatus() != Order.OrderStatus.CREATED) {
+            throw new InvalidOrderStateException(
+                    "OrderItems can only be deleted when order status is CREATED. Current status: " + order.getStatus()
+            );
+        }
+
+        Product product = existing.getProduct();
+        product.setStockQuantity(product.getStockQuantity() + existing.getQuantity());
+        productRepository.save(product);
+
         orderItemRepository.delete(existing);
     }
 }
