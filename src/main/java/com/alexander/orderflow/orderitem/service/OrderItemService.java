@@ -6,6 +6,7 @@ import com.alexander.orderflow.exception.ResourceNotFoundException;
 import com.alexander.orderflow.order.entity.Order;
 import com.alexander.orderflow.order.repository.OrderRepository;
 import com.alexander.orderflow.orderitem.dto.OrderItemRequest;
+import com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest;
 import com.alexander.orderflow.orderitem.entity.OrderItem;
 import com.alexander.orderflow.orderitem.mapper.OrderItemMapper;
 import com.alexander.orderflow.orderitem.repository.OrderItemRepository;
@@ -104,5 +105,43 @@ public class OrderItemService {
         productRepository.save(product);
 
         orderItemRepository.delete(existing);
+    }
+
+    @Transactional
+    public OrderItem updateOrderItemQuantity(Long id, OrderItemPatchRequest request) {
+        OrderItem existing = getOrderItemById(id);
+
+        Order order = existing.getOrder();
+        if (order.getStatus() != Order.OrderStatus.CREATED) {
+            throw new InvalidOrderStateException(
+                    "OrderItems can only be updated when order status is CREATED. Current status: " + order.getStatus()
+            );
+        }
+
+        Product product = existing.getProduct();
+
+        int currentQuantity = existing.getQuantity();
+        int newQuantity = request.getQuantity();
+        int difference = newQuantity - currentQuantity;
+
+        if (difference > 0) {
+            if (product.getStockQuantity() < difference) {
+                throw new InsufficientStockException(
+                        "Not enough stock for product id " + product.getId()
+                                + ". Available: " + product.getStockQuantity()
+                                + ", additional requested: " + difference
+                );
+            }
+
+            product.setStockQuantity(product.getStockQuantity() - difference);
+            productRepository.save(product);
+        } else if (difference < 0) {
+            product.setStockQuantity(product.getStockQuantity() + Math.abs(difference));
+            productRepository.save(product);
+        }
+
+        existing.setQuantity(newQuantity);
+
+        return orderItemRepository.save(existing);
     }
 }

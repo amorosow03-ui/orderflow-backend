@@ -2,6 +2,7 @@ package com.alexander.orderflow.orderitem.controller;
 
 import com.alexander.orderflow.orderitem.dto.OrderItemRequest;
 import com.alexander.orderflow.orderitem.dto.OrderItemResponse;
+import com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest;
 import com.alexander.orderflow.orderitem.entity.OrderItem;
 import com.alexander.orderflow.orderitem.mapper.OrderItemMapper;
 import com.alexander.orderflow.orderitem.service.OrderItemService;
@@ -71,5 +72,15 @@ public class OrderItemController {
     public ResponseEntity<Void> deleteOrderItem(@PathVariable Long id) {
         service.deleteOrderItem(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Update OrderItem quantity")
+    public ResponseEntity<OrderItemResponse> updateOrderItemQuantity(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderItemPatchRequest request
+    ) {
+        OrderItem updated = service.updateOrderItemQuantity(id, request);
+        return ResponseEntity.ok(mapper.toResponse(updated));
     }
 }
