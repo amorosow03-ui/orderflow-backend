@@ -100,6 +100,26 @@ public class OrderService {
     @Transactional
     public void deleteOrder(Long id) {
         Order existing = getOrderById(id);
+
+        OrderStatus status = existing.getStatus();
+
+        if (status != OrderStatus.CREATED && status != OrderStatus.CANCELLED) {
+            throw new InvalidOrderStateException(
+                    "Orders can only be deleted when status is CREATED or CANCELLED. Current status: " + status
+            );
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(existing.getId());
+
+        if (status == OrderStatus.CREATED) {
+            for (OrderItem orderItem : orderItems) {
+                Product product = orderItem.getProduct();
+                product.setStockQuantity(product.getStockQuantity() + orderItem.getQuantity());
+                productRepository.save(product);
+            }
+        }
+
+        orderItemRepository.deleteAll(orderItems);
         orderRepository.delete(existing);
     }
 
