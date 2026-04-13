@@ -15,6 +15,10 @@ import com.alexander.orderflow.orderitem.entity.OrderItem;
 import com.alexander.orderflow.orderitem.repository.OrderItemRepository;
 import com.alexander.orderflow.product.entity.Product;
 import com.alexander.orderflow.product.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import com.alexander.orderflow.order.specification.OrderSpecification;
 
 import java.util.List;
 
@@ -128,6 +132,19 @@ public class OrderService {
         getOrderById(orderId);
 
         return orderItemRepository.findByOrderId(orderId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Order> getOrders(
+            OrderStatus status,
+            Long customerId,
+            Pageable pageable
+    ) {
+        Specification<Order> spec = Specification
+                .where(OrderSpecification.hasStatus(status))
+                .and(OrderSpecification.hasCustomerId(customerId));
+
+        return orderRepository.findAll(spec, pageable);
     }
 
     private void validateStatusTransition(Order.OrderStatus currentStatus, Order.OrderStatus newStatus) {

@@ -11,10 +11,12 @@ import com.alexander.orderflow.orderitem.entity.OrderItem;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,13 +52,28 @@ public class OrderController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all Orders")
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
-        List<OrderResponse> responses = service.getAllOrders()
-                .stream()
+    @Operation(summary = "Get paginated list of orders with optional filters")
+    public ResponseEntity<com.alexander.orderflow.product.dto.PagedResponse<OrderResponse>> getOrders(
+            @RequestParam(required = false) Order.OrderStatus status,
+            @RequestParam(required = false) Long customerId,
+            @PageableDefault(page = 0, size = 10, sort = "createdAt") Pageable pageable
+    ) {
+        var orderPage = service.getOrders(status, customerId, pageable);
+
+        List<OrderResponse> content = orderPage.getContent().stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+                .toList();
+
+        var response = new com.alexander.orderflow.product.dto.PagedResponse<>(
+                content,
+                orderPage.getNumber(),
+                orderPage.getSize(),
+                orderPage.getTotalElements(),
+                orderPage.getTotalPages(),
+                orderPage.isLast()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/customer/{customerId}")

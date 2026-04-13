@@ -5,7 +5,7 @@ import com.alexander.orderflow.product.dto.ProductResponse;
 import com.alexander.orderflow.product.entity.Product;
 import com.alexander.orderflow.product.mapper.ProductMapper;
 import com.alexander.orderflow.product.service.ProductService;
-import com. alexander.orderflow.product.dto.ProductPatchRequest;
+import com.alexander.orderflow.product.dto.ProductPatchRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -102,7 +102,7 @@ public class ProductController{
 
         List<ProductResponse> content = productPage.getContent().stream()
                 .map(productMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         return new PagedResponse<>(
                 content,
