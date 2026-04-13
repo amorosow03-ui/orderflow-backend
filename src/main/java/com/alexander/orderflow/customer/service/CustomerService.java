@@ -7,6 +7,8 @@ import com.alexander.orderflow.customer.mapper.CustomerMapper;
 import com.alexander.orderflow.customer.repository.CustomerRepository;
 import com.alexander.orderflow.exception.DuplicateResourceException;
 import com.alexander.orderflow.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,12 @@ public class CustomerService {
     public List<Customer> getAllCustomers() {
         return repository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public Page<Customer> getAllCustomers(Pageable pageable) {
+        return repository.findAll(pageable);
+    }
+
 
     @Transactional
     public Customer updateCustomer(Long id, CustomerRequest request) {

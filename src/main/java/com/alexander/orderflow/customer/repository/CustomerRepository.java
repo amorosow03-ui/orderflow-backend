@@ -5,7 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface CustomerRepository extends JpaRepository<Customer, Long> {
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+public interface CustomerRepository extends JpaRepository<Customer, Long>,
+        JpaSpecificationExecutor<Customer> {
 
     Optional<Customer> findByEmail(String email);
 
