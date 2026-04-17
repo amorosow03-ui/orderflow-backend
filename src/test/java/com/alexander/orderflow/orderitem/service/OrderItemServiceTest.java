@@ -152,12 +152,17 @@ class OrderItemServiceTest {
         orderItemService.deleteOrderItem(1L);
 
         // THEN
+
+        // 1. State prüfen
         assert product.getStockQuantity() == 8;
+
+        // 2. Behavior prüfen
+        Mockito.verify(productRepository).save(product);
+        Mockito.verify(orderItemRepository).delete(orderItem);
     }
 
     @Test
     void shouldThrowWhenDeletingOrderItemNotCreated() {
-        // GIVEN
         Order order = new Order();
         order.setStatus(Order.OrderStatus.PAID);
 
@@ -167,9 +172,12 @@ class OrderItemServiceTest {
         Mockito.when(orderItemRepository.findById(1L))
                 .thenReturn(Optional.of(orderItem));
 
-        // THEN
         assertThrows(InvalidOrderStateException.class, () ->
                 orderItemService.deleteOrderItem(1L)
         );
+
+        // WICHTIG: nichts darf passieren
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
+        Mockito.verify(orderItemRepository, Mockito.never()).delete(Mockito.any());
     }
 }
