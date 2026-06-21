@@ -50,6 +50,12 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with id " + request.getCustomerId()));
 
+        if (request.getStatus() != null && request.getStatus() != OrderStatus.CREATED) {
+            throw new InvalidOrderStateException(
+                    "New orders must start with status CREATED. Requested status: " + request.getStatus()
+            );
+        }
+
         Order order = orderMapper.toEntity(request, customer);
         return orderRepository.save(order);
     }
