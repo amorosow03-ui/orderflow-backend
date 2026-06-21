@@ -8,6 +8,8 @@ import com.alexander.orderflow.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class OrderServiceTest {
@@ -51,7 +53,7 @@ class OrderServiceTest {
             setStatus(Order.OrderStatus.PAID);
         }});
 
-        assert result.getStatus() == Order.OrderStatus.PAID;
+        assertEquals(Order.OrderStatus.PAID, result.getStatus());
     }
 
     @Test
@@ -99,7 +101,7 @@ class OrderServiceTest {
 
         orderService.patchOrder(1L, patchRequest);
 
-        assert product.getStockQuantity() == 8; // 5 + 3
+        assertEquals(8, product.getStockQuantity()); // 5 + 3
     }
 
     @Test
@@ -138,7 +140,51 @@ class OrderServiceTest {
 
         orderService.deleteOrder(1L);
 
-        assert product.getStockQuantity() == 12;
+        assertEquals(12, product.getStockQuantity());
         Mockito.verify(orderRepository).delete(order);
+    }
+
+    @Test
+    void shouldRejectAnyFieldChangeWhenOrderIsShipped() {
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(Order.OrderStatus.SHIPPED);
+
+        Mockito.when(orderRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(order));
+
+        // Gleicher Status wird mitgeschickt - kein "echter" Statuswechsel,
+        // aber die Order ist trotzdem komplett gesperrt.
+        var patchRequest = new com.alexander.orderflow.order.dto.OrderPatchRequest();
+        patchRequest.setCustomerId(99L);
+        patchRequest.setStatus(Order.OrderStatus.SHIPPED);
+
+        assertThrows(
+                com.alexander.orderflow.exception.InvalidOrderStateException.class,
+                () -> orderService.patchOrder(1L, patchRequest)
+        );
+
+        // Sicherstellen, dass die Order NICHT gespeichert wurde
+        Mockito.verify(orderRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldRejectOrderCreationWithNonCreatedStatus() {
+        var customer = new com.alexander.orderflow.customer.entity.Customer();
+        customer.setId(1L);
+
+        Mockito.when(customerRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(customer));
+
+        var request = new com.alexander.orderflow.order.dto.OrderRequest();
+        request.setCustomerId(1L);
+        request.setStatus(Order.OrderStatus.SHIPPED);
+
+        assertThrows(
+                com.alexander.orderflow.exception.InvalidOrderStateException.class,
+                () -> orderService.createOrder(request)
+        );
+
+        Mockito.verify(orderRepository, Mockito.never()).save(Mockito.any());
     }
 }

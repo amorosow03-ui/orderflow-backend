@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,7 +77,8 @@ class OrderItemServiceTest {
         orderItemService.createOrderItem(request);
 
         // THEN
-        assert product.getStockQuantity() == 7;
+        assertEquals(7, product.getStockQuantity());
+        Mockito.verify(orderItemRepository).save(orderItem);
     }
 
     @Test
@@ -154,7 +156,7 @@ class OrderItemServiceTest {
         // THEN
 
         // 1. State prüfen
-        assert product.getStockQuantity() == 8;
+        assertEquals(8, product.getStockQuantity());
 
         // 2. Behavior prüfen
         Mockito.verify(productRepository).save(product);
