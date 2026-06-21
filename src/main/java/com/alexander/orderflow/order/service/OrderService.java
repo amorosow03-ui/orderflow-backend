@@ -74,6 +74,8 @@ public class OrderService {
     public Order updateOrder(Long id, OrderRequest request) {
         Order existing = getOrderById(id);
 
+        ensureOrderIsModifiable(existing);   // ← NEU: Guard zuerst
+
         var customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with id " + request.getCustomerId()));
@@ -88,6 +90,8 @@ public class OrderService {
     @Transactional
     public Order patchOrder(Long id, OrderPatchRequest patchRequest) {
         Order existing = getOrderById(id);
+
+        ensureOrderIsModifiable(existing);   // ← NEU: Guard zuerst
 
         if (patchRequest.getCustomerId() != null) {
             var customer = customerRepository.findById(patchRequest.getCustomerId())
@@ -145,6 +149,14 @@ public class OrderService {
                 .and(OrderSpecification.hasCustomerId(customerId));
 
         return orderRepository.findAll(spec, pageable);
+    }
+
+    private void ensureOrderIsModifiable(Order order) {
+        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new InvalidOrderStateException(
+                    "Order with status " + order.getStatus() + " cannot be modified"
+            );
+        }
     }
 
     private void validateStatusTransition(Order.OrderStatus currentStatus, Order.OrderStatus newStatus) {
