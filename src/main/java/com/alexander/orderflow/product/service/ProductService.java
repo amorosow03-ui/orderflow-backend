@@ -51,7 +51,7 @@ public class ProductService{
                 .orElseThrow(() -> new ResourceNotFoundException("Product with id " + id + " not found"));
 
         if(productRepository.existsBySkuAndIdNot(request.getSku(), id)){
-            throw new DuplicateResourceException("Product with SKU " + product.getSku() + " already exists");
+            throw new DuplicateResourceException("Product with SKU " + request.getSku() + " already exists");
         }
 
         product.setSku(request.getSku());
