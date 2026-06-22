@@ -1,5 +1,6 @@
 package com.alexander.orderflow.product.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -13,7 +14,7 @@ public class CreateProductRequest {
     @NotBlank(message = "Name must not be blank")
     private String name;
     @NotNull(message = "Price must be not null")
-    @PositiveOrZero(message = "Price must be zero or positive")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private BigDecimal price;
     @NotNull(message = "Stock quantity must be not null")
     @PositiveOrZero(message = "Stock quantity must be zero or positive")
