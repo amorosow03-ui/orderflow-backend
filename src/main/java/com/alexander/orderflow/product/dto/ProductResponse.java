@@ -1,7 +1,4 @@
 package com.alexander.orderflow.product.dto;
-
-import org.springframework.cglib.core.Local;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

@@ -1,6 +1,5 @@
 package com.alexander.orderflow.product.entity;
 import jakarta.persistence.*;
-import org.springframework.cglib.core.Local;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;

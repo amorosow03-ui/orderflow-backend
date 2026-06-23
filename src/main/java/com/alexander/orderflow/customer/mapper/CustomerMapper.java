@@ -29,11 +29,4 @@ public class CustomerMapper {
         customer.setPhoneNumber(request.getPhoneNumber());
         return customer;
     }
-
-    public void patchEntity(CustomerPatchRequest patch, Customer customer) {
-        if (patch.getFirstName() != null) customer.setFirstName(patch.getFirstName());
-        if (patch.getLastName() != null) customer.setLastName(patch.getLastName());
-        if (patch.getEmail() != null) customer.setEmail(patch.getEmail());
-        if (patch.getPhoneNumber() != null) customer.setPhoneNumber(patch.getPhoneNumber());
-    }
 }

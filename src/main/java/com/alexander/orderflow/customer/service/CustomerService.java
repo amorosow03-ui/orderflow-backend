@@ -43,11 +43,6 @@ public class CustomerService {
     }
 
     @Transactional(readOnly = true)
-    public List<Customer> getAllCustomers() {
-        return repository.findAll();
-    }
-
-    @Transactional(readOnly = true)
     public Page<Customer> getAllCustomers(Pageable pageable) {
         return repository.findAll(pageable);
     }
