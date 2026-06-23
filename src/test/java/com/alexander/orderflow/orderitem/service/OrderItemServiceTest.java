@@ -182,4 +182,172 @@ class OrderItemServiceTest {
         Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
         Mockito.verify(orderItemRepository, Mockito.never()).delete(Mockito.any());
     }
+
+    // =========================
+    // UPDATE ORDER ITEM QUANTITY TESTS
+    // =========================
+
+    @Test
+    void shouldReduceStockWhenQuantityIncreasedWithEnoughStock() {
+        // GIVEN: Bestellmenge soll von 3 auf 5 erhöht werden (+2),
+        // Produkt hat noch 10 auf Lager.
+        Order order = new Order();
+        order.setStatus(Order.OrderStatus.CREATED);
+
+        Product product = new Product();
+        product.setStockQuantity(10);
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(product);
+        orderItem.setQuantity(3);
+
+        var patchRequest = new com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest();
+        patchRequest.setQuantity(5);
+
+        Mockito.when(orderItemRepository.findById(1L))
+                .thenReturn(Optional.of(orderItem));
+
+        Mockito.when(orderItemRepository.save(orderItem))
+                .thenReturn(orderItem);
+
+        // WHEN
+        OrderItem result = orderItemService.updateOrderItemQuantity(1L, patchRequest);
+
+        // THEN
+        // Stock muss um die Differenz (2) sinken: 10 - 2 = 8
+        assertEquals(8, product.getStockQuantity());
+        assertEquals(5, result.getQuantity());
+        Mockito.verify(productRepository).save(product);
+    }
+
+    @Test
+    void shouldThrowWhenIncreasingQuantityBeyondAvailableStock() {
+        // GIVEN: Bestellmenge soll von 3 auf 10 erhöht werden (+7),
+        // Produkt hat aber nur noch 2 auf Lager.
+        Order order = new Order();
+        order.setStatus(Order.OrderStatus.CREATED);
+
+        Product product = new Product();
+        product.setStockQuantity(2);
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(product);
+        orderItem.setQuantity(3);
+
+        var patchRequest = new com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest();
+        patchRequest.setQuantity(10);
+
+        Mockito.when(orderItemRepository.findById(1L))
+                .thenReturn(Optional.of(orderItem));
+
+        // THEN
+        assertThrows(InsufficientStockException.class, () ->
+                orderItemService.updateOrderItemQuantity(1L, patchRequest)
+        );
+
+        // Stock darf NICHT verändert worden sein, weil die Operation
+        // komplett abgelehnt wird, nicht teilweise ausgeführt.
+        assertEquals(2, product.getStockQuantity());
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
+        Mockito.verify(orderItemRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldRestoreStockWhenQuantityDecreased() {
+        // GIVEN: Bestellmenge soll von 5 auf 2 verringert werden (-3),
+        // die Differenz von 3 muss an den Lagerbestand zurückgegeben werden.
+        Order order = new Order();
+        order.setStatus(Order.OrderStatus.CREATED);
+
+        Product product = new Product();
+        product.setStockQuantity(4);
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(product);
+        orderItem.setQuantity(5);
+
+        var patchRequest = new com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest();
+        patchRequest.setQuantity(2);
+
+        Mockito.when(orderItemRepository.findById(1L))
+                .thenReturn(Optional.of(orderItem));
+
+        Mockito.when(orderItemRepository.save(orderItem))
+                .thenReturn(orderItem);
+
+        // WHEN
+        OrderItem result = orderItemService.updateOrderItemQuantity(1L, patchRequest);
+
+        // THEN
+        // Stock muss um die Differenz (3) steigen: 4 + 3 = 7
+        assertEquals(7, product.getStockQuantity());
+        assertEquals(2, result.getQuantity());
+        Mockito.verify(productRepository).save(product);
+    }
+
+    @Test
+    void shouldNotTouchStockWhenQuantityUnchanged() {
+        // GIVEN: Bestellmenge bleibt gleich (5 -> 5), Stock darf gar nicht
+        // berührt werden.
+        Order order = new Order();
+        order.setStatus(Order.OrderStatus.CREATED);
+
+        Product product = new Product();
+        product.setStockQuantity(4);
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(product);
+        orderItem.setQuantity(5);
+
+        var patchRequest = new com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest();
+        patchRequest.setQuantity(5);
+
+        Mockito.when(orderItemRepository.findById(1L))
+                .thenReturn(Optional.of(orderItem));
+
+        Mockito.when(orderItemRepository.save(orderItem))
+                .thenReturn(orderItem);
+
+        // WHEN
+        orderItemService.updateOrderItemQuantity(1L, patchRequest);
+
+        // THEN
+        assertEquals(4, product.getStockQuantity());
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingQuantityOnNonCreatedOrder() {
+        // GIVEN: Order ist bereits PAID, Menge darf nicht mehr verändert werden.
+        Order order = new Order();
+        order.setStatus(Order.OrderStatus.PAID);
+
+        Product product = new Product();
+        product.setStockQuantity(10);
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(product);
+        orderItem.setQuantity(3);
+
+        var patchRequest = new com.alexander.orderflow.orderitem.dto.OrderItemPatchRequest();
+        patchRequest.setQuantity(5);
+
+        Mockito.when(orderItemRepository.findById(1L))
+                .thenReturn(Optional.of(orderItem));
+
+        // THEN
+        assertThrows(InvalidOrderStateException.class, () ->
+                orderItemService.updateOrderItemQuantity(1L, patchRequest)
+        );
+
+        // Nichts darf angefasst worden sein
+        assertEquals(10, product.getStockQuantity());
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
+        Mockito.verify(orderItemRepository, Mockito.never()).save(Mockito.any());
+    }
 }
